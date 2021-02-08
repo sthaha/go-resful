@@ -6,15 +6,14 @@ import (
 )
 
 type User struct {
-	firstName string
-	lastName string
-	id string
+	Name string
+	ID string
 }
 
 func GetUser(request *restful.Request, response *restful.Response) {
 	// some user := fetch by userid
 	id := request.PathParameter("user-id")
-	usr := &User{id: id, firstName: "John", lastName: "Doe"}
+	usr := &User{ID: id, Name: "John Doe"}
 	response.WriteEntity(usr)
 }
 
@@ -30,7 +29,8 @@ func UpdateUser(request *restful.Request, response *restful.Response) {
 
 func CreateUser(request *restful.Request, response *restful.Response) {
 	// new user id = userid
-	usr := User{id: request.PathParameter("user-id")}
+
+	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
