@@ -29,6 +29,7 @@ func UpdateUser(request *restful.Request, response *restful.Response) {
 
 func CreateUser(request *restful.Request, response *restful.Response) {
 	// new user id = userid
+
 	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
 	if err != nil {
