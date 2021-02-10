@@ -1,11 +1,10 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/emicklei/go-restful"
 	"github.com/sthaha/go-restful-example/userservice"
+	"log"
+	"net/http"
 )
 
 func main() {
@@ -14,3 +13,4 @@ func main() {
 	log.Print("Running at ", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
+
