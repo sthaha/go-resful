@@ -1,14 +1,15 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/emicklei/go-restful"
 	"github.com/sthaha/go-restful-example/userservice"
+	"log"
+	"net/http"
 )
 
 func main() {
 	restful.Add(userservice.New())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	addr := ":8080"
+	log.Print("Running at ", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }

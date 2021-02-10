@@ -2,18 +2,25 @@ package userservice
 
 import (
 	"github.com/emicklei/go-restful"
+	etcdclient "github.com/sthaha/go-restful-example/etcd"
 	"net/http"
 )
 
 type User struct {
 	Name string
-	ID string
+	ID   string
 }
 
 func GetUser(request *restful.Request, response *restful.Response) {
 	// some user := fetch by userid
 	id := request.PathParameter("user-id")
-	usr := &User{ID: id, Name: "John Doe"}
+	res := etcdclient.GetUserKV(id)
+	var name string
+	for _, ev := range res.Kvs {
+		name = string(ev.Value)
+	}
+
+	usr := &User{ID: id, Name: name}
 	response.WriteEntity(usr)
 }
 
@@ -29,6 +36,7 @@ func UpdateUser(request *restful.Request, response *restful.Response) {
 
 func CreateUser(request *restful.Request, response *restful.Response) {
 	// new user id = userid
+
 	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
 	if err != nil {
