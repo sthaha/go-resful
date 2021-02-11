@@ -2,9 +2,10 @@ package etcdclient
 
 import (
 	"context"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"time"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func GetUserKV(id string) *clientv3.GetResponse {
@@ -28,4 +29,3 @@ func GetUserKV(id string) *clientv3.GetResponse {
 
 	return result
 }
-

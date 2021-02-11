@@ -1,9 +1,20 @@
 package userservice
 
 import (
+<<<<<<< HEAD
+	"net/http"
+
 	"github.com/emicklei/go-restful"
 	etcdclient "github.com/sthaha/go-restful-example/etcd"
+=======
+	"context"
+	"log"
 	"net/http"
+
+	"github.com/emicklei/go-restful"
+	client "github.com/sthaha/go-restful-example/etcd"
+	clientv3 "go.etcd.io/etcd/client/v3"
+>>>>>>> origin/etcd-first-example
 )
 
 type User struct {
@@ -14,7 +25,17 @@ type User struct {
 func GetUser(request *restful.Request, response *restful.Response) {
 	// some user := fetch by userid
 	id := request.PathParameter("user-id")
-	res := etcdclient.GetUserKV(id)
+	cli, err := client.New()
+	defer cli.Close()
+
+	kv := clientv3.NewKV(cli)
+	key := "/users/" + id
+
+	res, err := kv.Get(context.TODO(), key)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
 	var name string
 	for _, ev := range res.Kvs {
 		name = string(ev.Value)
