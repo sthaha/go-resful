@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/emicklei/go-restful"
-	"github.com/sthaha/go-restful-example/userservice"
 	"log"
 	"net/http"
+
+	"github.com/emicklei/go-restful"
+	"github.com/sthaha/go-restful-example/userservice"
 )
+
 
 func main() {
 	restful.Add(userservice.New())
