@@ -1,4 +1,4 @@
-package userservice
+package user
 
 import (
 	"context"
@@ -8,8 +8,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 
-	"github.com/sthaha/go-restful-example/etcd"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	etcd "go.etcd.io/etcd/client/v3"
 )
 
 type User struct {
@@ -18,10 +17,12 @@ type User struct {
 	LastName  string `json:",omitempty"`
 }
 
-type Client etcd.Client
+type service struct {
+	etcd *etcd.Client
+}
 
-func (c *Client) GetUser(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(c.Client)
+func (s *service) Get(request *restful.Request, response *restful.Response) {
+	kv := etcd.NewKV(s.etcd)
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
@@ -42,8 +43,8 @@ func (c *Client) GetUser(request *restful.Request, response *restful.Response) {
 	response.WriteEntity(usr)
 }
 
-func (c *Client) CreateUser(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(c.Client)
+func (s *service) Create(request *restful.Request, response *restful.Response) {
+	kv := etcd.NewKV(s.etcd)
 
 	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
@@ -64,8 +65,8 @@ func (c *Client) CreateUser(request *restful.Request, response *restful.Response
 	response.WriteEntity(usr)
 }
 
-func (c *Client) UpdateUser(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(c.Client)
+func (s *service) Update(request *restful.Request, response *restful.Response) {
+	kv := etcd.NewKV(s.etcd)
 
 	usr := User{}
 	err := request.ReadEntity(&usr)
@@ -86,8 +87,8 @@ func (c *Client) UpdateUser(request *restful.Request, response *restful.Response
 	response.WriteEntity(usr)
 }
 
-func (c *Client) DeleteUser(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(c.Client)
+func (s *service) Delete(request *restful.Request, response *restful.Response) {
+	kv := etcd.NewKV(s.etcd)
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
@@ -112,16 +113,18 @@ func (c *Client) DeleteUser(request *restful.Request, response *restful.Response
 	response.WriteEntity(usr)
 }
 
-func New(c *Client) *restful.WebService {
-	service := new(restful.WebService)
-	service.
+func NewService(c *etcd.Client) *restful.WebService {
+	ws := &restful.WebService{}
+	ws.
 		Path("/users").
 		Consumes(restful.MIME_JSON, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_JSON)
 
-	service.Route(service.GET("/{user-id}").To(c.GetUser))
-	service.Route(service.PUT("").To(c.UpdateUser))
-	service.Route(service.POST("/{user-id}").To(c.CreateUser))
-	service.Route(service.DELETE("/{user-id}").To(c.DeleteUser))
-	return service
+	user := &service{c}
+
+	ws.Route(ws.GET("/{user-id}").To(user.Get))
+	ws.Route(ws.PUT("").To(user.Update))
+	ws.Route(ws.POST("/{user-id}").To(user.Create))
+	ws.Route(ws.DELETE("/{user-id}").To(user.Delete))
+	return ws
 }
