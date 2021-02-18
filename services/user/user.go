@@ -3,12 +3,13 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"github.com/sthaha/go-restful-example/app"
 	"log"
 	"net/http"
 
 	"github.com/emicklei/go-restful"
 
-	etcd "go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type User struct {
@@ -17,26 +18,28 @@ type User struct {
 	LastName  string `json:",omitempty"`
 }
 
-type service struct {
-	etcd *etcd.Client
-}
+type service struct { *app.App }
 
 func (s *service) Get(request *restful.Request, response *restful.Response) {
-	kv := etcd.NewKV(s.etcd)
+	kv := clientv3.NewKV(s.Etcd)
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
 
 	res, err := kv.Get(context.TODO(), key)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Printf("err: %v", err)
+		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	usr := new(User)
 	for _, ev := range res.Kvs {
 		err := json.Unmarshal(ev.Value, &usr)
 		if err != nil {
+			log.Printf("err: %v", err)
 			response.WriteError(http.StatusInternalServerError, err)
+			return
 		}
 	}
 
@@ -44,51 +47,63 @@ func (s *service) Get(request *restful.Request, response *restful.Response) {
 }
 
 func (s *service) Create(request *restful.Request, response *restful.Response) {
-	kv := etcd.NewKV(s.etcd)
+	kv := clientv3.NewKV(s.Etcd)
 
 	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	usrData, err := json.Marshal(usr)
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	_, err = kv.Put(context.TODO(), "/users/"+usr.ID, string(usrData))
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	response.WriteEntity(usr)
 }
 
 func (s *service) Update(request *restful.Request, response *restful.Response) {
-	kv := etcd.NewKV(s.etcd)
+	kv := clientv3.NewKV(s.Etcd)
 
 	usr := User{}
 	err := request.ReadEntity(&usr)
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	usrData, err := json.Marshal(usr)
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	_, err = kv.Put(context.TODO(), "/users/"+usr.ID, string(usrData))
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 
 	response.WriteEntity(usr)
 }
 
 func (s *service) Delete(request *restful.Request, response *restful.Response) {
-	kv := etcd.NewKV(s.etcd)
+	kv := clientv3.NewKV(s.Etcd)
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
@@ -102,25 +117,29 @@ func (s *service) Delete(request *restful.Request, response *restful.Response) {
 	for _, ev := range res.Kvs {
 		err := json.Unmarshal(ev.Value, &usr)
 		if err != nil {
+			log.Printf("err: %v", err)
 			response.WriteError(http.StatusInternalServerError, err)
+			return
 		}
 	}
 
 	_, err = kv.Delete(context.TODO(), "/users/"+usr.ID)
 	if err != nil {
+		log.Printf("err: %v", err)
 		response.WriteError(http.StatusInternalServerError, err)
+		return
 	}
 	response.WriteEntity(usr)
 }
 
-func NewService(c *etcd.Client) *restful.WebService {
+func NewService(a *app.App) *restful.WebService {
 	ws := &restful.WebService{}
 	ws.
 		Path("/users").
 		Consumes(restful.MIME_JSON, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_JSON)
 
-	user := &service{c}
+	user := &service{App: a}
 
 	ws.Route(ws.GET("/{user-id}").To(user.Get))
 	ws.Route(ws.PUT("").To(user.Update))

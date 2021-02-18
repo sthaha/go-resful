@@ -11,4 +11,5 @@ replace (
 require (
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	go.etcd.io/etcd/client/v3 v3.0.0-20210210213918-d33a1c91f0cf
+	k8s.io/klog/v2 v2.5.0
 )
