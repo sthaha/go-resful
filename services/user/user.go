@@ -3,9 +3,10 @@ package user
 import (
 	"context"
 	"encoding/json"
-	"github.com/sthaha/go-restful-example/app"
 	"log"
 	"net/http"
+
+	"github.com/sthaha/go-restful-example/app"
 
 	"github.com/emicklei/go-restful"
 
@@ -18,10 +19,12 @@ type User struct {
 	LastName  string `json:",omitempty"`
 }
 
-type service struct { *app.App }
+type service struct {
+	app app.App
+}
 
 func (s *service) Get(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(s.Etcd)
+	kv := clientv3.NewKV(s.app.Etcd())
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
@@ -47,7 +50,7 @@ func (s *service) Get(request *restful.Request, response *restful.Response) {
 }
 
 func (s *service) Create(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(s.Etcd)
+	kv := clientv3.NewKV(s.app.Etcd())
 
 	usr := User{ID: request.PathParameter("user-id")}
 	err := request.ReadEntity(&usr)
@@ -75,7 +78,7 @@ func (s *service) Create(request *restful.Request, response *restful.Response) {
 }
 
 func (s *service) Update(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(s.Etcd)
+	kv := clientv3.NewKV(s.app.Etcd())
 
 	usr := User{}
 	err := request.ReadEntity(&usr)
@@ -103,7 +106,7 @@ func (s *service) Update(request *restful.Request, response *restful.Response) {
 }
 
 func (s *service) Delete(request *restful.Request, response *restful.Response) {
-	kv := clientv3.NewKV(s.Etcd)
+	kv := clientv3.NewKV(s.app.Etcd())
 
 	id := request.PathParameter("user-id")
 	key := "/users/" + id
@@ -132,14 +135,14 @@ func (s *service) Delete(request *restful.Request, response *restful.Response) {
 	response.WriteEntity(usr)
 }
 
-func NewService(a *app.App) *restful.WebService {
+func NewService(a app.App) *restful.WebService {
 	ws := &restful.WebService{}
 	ws.
 		Path("/users").
 		Consumes(restful.MIME_JSON, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_JSON)
 
-	user := &service{App: a}
+	user := &service{app: a}
 
 	ws.Route(ws.GET("/{user-id}").To(user.Get))
 	ws.Route(ws.PUT("").To(user.Update))
